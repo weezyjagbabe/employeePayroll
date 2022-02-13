@@ -27,15 +27,6 @@ public class Employee {
 		this.role = role;
 	}
 	
-	
-	public Employee(String name, String email, String role) {
-		super();
-		this.name = name;
-		this.email = email;
-		this.role = role;
-	}
-	
-	
 
 	public Employee() {
 	}

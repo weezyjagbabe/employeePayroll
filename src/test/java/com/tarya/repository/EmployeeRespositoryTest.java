@@ -1,5 +1,6 @@
 package com.tarya.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -50,6 +51,14 @@ public class EmployeeRespositoryTest {
 		.thenReturn(employee);	
 		Employee employee1 = employeeRepository.findById("620564da21a3ed511318a1af").get();		
 		assertEquals(employee1.getId(), Id);
+	}
+	@Test
+	public void testFindOne_Null() {
+		final String Id = "620564da21a3ed511318a1af";
+		Optional<Employee> employee = Optional.ofNullable(new Employee());
+		lenient().when(employeeRepository.findById(Id))
+		.thenReturn(employee);	
+		assertEquals(null, employee.get().getId());
 	}
 	
 	@Test

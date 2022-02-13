@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tarya.application.CoreTestConfiguration;
 import com.tarya.entity.Employee;
@@ -53,7 +54,7 @@ public class EmployeeControllerTest {
 
 	@Test
 	public void getAllEmployees_basic() throws Exception {
-		ResponseData<List<Employee>> response = new ResponseData();
+		ResponseData<List<Employee>> response = new ResponseData<List<Employee>>();
 		response.setResponseCode(HttpStatus.OK.value());
 		response.setResponseMessage(HttpStatus.OK.getReasonPhrase());
 		response.setResponseContent(
@@ -70,7 +71,7 @@ public class EmployeeControllerTest {
 
 	@Test
 	public void getAllEmployees_noitems() throws Exception {
-		ResponseData<List<Employee>> response = new ResponseData();
+		ResponseData<List<Employee>> response = new ResponseData<List<Employee>>();
 		response.setResponseCode(HttpStatus.NO_CONTENT.value());
 		response.setResponseMessage(HttpStatus.NO_CONTENT.getReasonPhrase());
 		response.setResponseContent(Arrays.asList());
@@ -85,7 +86,7 @@ public class EmployeeControllerTest {
 	@Test
 	public void getEmployeeById_basic() throws Exception {
 		final String Id = "1";
-		ResponseData<Employee> response = new ResponseData();
+		ResponseData<Employee> response = new ResponseData<Employee>();
 		response.setResponseCode(HttpStatus.OK.value());
 		response.setResponseMessage(HttpStatus.OK.getReasonPhrase());
 		response.setResponseContent(new Employee("1", "Solomon", "borteys@yahoo.com", "Software Engineer"));
@@ -101,7 +102,7 @@ public class EmployeeControllerTest {
 	@Test
 	public void getEmployeeById_noitems() throws Exception {
 		final String Id = "1";
-		ResponseData<Employee> response = new ResponseData();
+		ResponseData<Employee> response = new ResponseData<Employee>();
 		response.setResponseCode(HttpStatus.NO_CONTENT.value());
 		response.setResponseMessage(HttpStatus.NO_CONTENT.getReasonPhrase());
 		response.setResponseContent(new Employee());
@@ -115,59 +116,49 @@ public class EmployeeControllerTest {
 
 	@Test
 	public void createEmployee_basic() throws Exception {
-		ResponseData<Employee> response = new ResponseData();
+		ResponseData<Employee> response = new ResponseData<Employee>();
 		response.setResponseCode(HttpStatus.CREATED.value());
 		response.setResponseMessage(HttpStatus.CREATED.getReasonPhrase());
 		response.setResponseContent(new Employee("1", "William", "willi@yahoo.com", "Support"));
 		when(employeeService.createEmployee(new Employee("1", "William", "willi@yahoo.com", "Support")))
 				.thenReturn(response);
-		String c = mockMvc.perform(MockMvcRequestBuilders.post("/employee/create")
+		mockMvc.perform(MockMvcRequestBuilders.post("/employee/create")
 				.content(asJsonString(new Employee("1","William","willi@yahoo.com","Support")))
 				.contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
 		.andReturn().getResponse().getContentAsString();
-//				.andExpect(status().isCreated())
-//				.andExpect(content().json(
-//						"{\"responseCode\":201,\"responseMessage\":\"CREATED\",\"responseContent\":{\"id\":\"1\",\"name\":\"William\",\"email\":\"willi@yahoo.com\",\"role\":\"Support\"}}"))
-//				.andReturn();
-		System.out.println("################### "+c);
+
 	}
 
 	@Test
 	public void updateEmployee_basic() throws Exception {
-		ResponseData<Employee> response = new ResponseData();
+		ResponseData<Employee> response = new ResponseData<Employee>();
 		response.setResponseCode(HttpStatus.CREATED.value());
 		response.setResponseMessage(HttpStatus.CREATED.getReasonPhrase());
 		response.setResponseContent(new Employee("1", "William", "willi@yahoo.com", "Support"));
 		when(employeeService.updateEmployee(new Employee("1","William","willi@yahoo.com","Support")))
 				.thenReturn(response);
-		String b = mockMvc.perform(MockMvcRequestBuilders.put("/employee/update")
+		mockMvc.perform(MockMvcRequestBuilders.put("/employee/update")
 				.content(asJsonString(new Employee("1","William", "willi@yahoo.com", "Support")))
 				.contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
 				
 		.andReturn().getResponse().getContentAsString();
-//				.andExpect(content().json(
-//						"{\"responseCode\":201,\"responseMessage\":\"CREATED\",\"responseContent\":{\"id\":\"1\",\"name\":\"William\",\"email\":\"willi@yahoo.com\",\"role\":\"Support\"}}"));
-//				.andReturn();
-		System.out.println("$$$$$$$$$$$$$$$$$$ "+b);
+
 
 	}
 
 	@Test
 	public void deleteEmployee_basic() throws Exception {
 		String Id = "1";
-		ResponseData<String> response = new ResponseData();
+		ResponseData<String> response = new ResponseData<String>();
 		response.setResponseCode(HttpStatus.ACCEPTED.value());
 		response.setResponseMessage(HttpStatus.ACCEPTED.getReasonPhrase());
 		when(employeeService.deleteEmployee(Id)).thenReturn(response);
 		mockMvc.perform(MockMvcRequestBuilders.delete("/employee/{id}", "1")).andExpect(status().isAccepted());
 	}
 
-	public static String asJsonString(final Object obj) {
-		try {
+	public static String asJsonString(final Object obj) throws RuntimeException, JsonProcessingException{
 			return new ObjectMapper().writeValueAsString(obj);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		
 	}
 
 }

@@ -20,81 +20,71 @@ public class EmployeeService {
 
 	@Autowired
 	EmployeeRepository employeeRepository;
-	ResponseData<Employee> response = new ResponseData();
-	ResponseData<List<Employee>> responseList = new ResponseData();
+	ResponseData<Employee> response = new ResponseData<Employee>();
+	ResponseData<List<Employee>> responseList = new ResponseData<List<Employee>>();
 	Employee tempEmp = new Employee();
 	List<Employee> empList = new ArrayList<>();
-	ResponseData<String> responseString = new ResponseData();
-	
-	
+	ResponseData<String> responseString = new ResponseData<String>();
+
 	public ResponseData<Employee> createEmployee(Employee employee) {
 		tempEmp = employeeRepository.findByEmailAndName(employee.getEmail(), employee.getName());
 		if (null == tempEmp) {
 			Employee empFound = employeeRepository.save(employee);
-			setResponseEmployer(empFound,HttpStatus.CREATED.value(),HttpStatus.CREATED.getReasonPhrase());
+			response = setResponseEmployer(empFound, HttpStatus.CREATED.value(), HttpStatus.CREATED.getReasonPhrase());
 		} else {
-			setResponseEmployer(tempEmp,HttpStatus.CONFLICT.value(),"Record already exist");
+			response = setResponseEmployer(tempEmp, HttpStatus.CONFLICT.value(), "Record already exist");
 		}
 		return response;
 	}
 
-	
-
 	public ResponseData<Employee> getEmployeeById(String id) {
-		try {
-			tempEmp = employeeRepository.findById(id).get();
-			setResponseEmployer(tempEmp,HttpStatus.CREATED.value(),HttpStatus.CREATED.getReasonPhrase());
-		} catch (Exception e) {
-			setResponseEmployer(new Employee(),HttpStatus.NO_CONTENT.value(),"Record Not Found");	
+		response = setResponseEmployer(new Employee(), HttpStatus.NO_CONTENT.value(), "Record Not Found");
+		tempEmp = employeeRepository.findById(id).get();
+		if (null != tempEmp) {
+			response = setResponseEmployer(tempEmp, HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
 		}
 		return response;
 	}
 
 	public ResponseData<List<Employee>> getAllEmployees() {
-		
+
 		empList = employeeRepository.findAll();
-		if(empList.size() > 0) {
-			setResponseEmployerList(empList, HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
-			
-		}else {
-			setResponseEmployerList(new ArrayList<>(), HttpStatus.NO_CONTENT.value(), "No record exists");
+		if (empList.size() > 0) {
+			responseList = setResponseEmployerList(empList, HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
+
+		} else {
+			responseList = setResponseEmployerList(new ArrayList<>(), HttpStatus.NO_CONTENT.value(),
+					"No record exists");
 		}
 		return responseList;
 	}
 
 	public ResponseData<Employee> updateEmployee(Employee employee) {
-		try {
-			employeeFindById(employee);
-			setResponseEmployer(employeeRepository.save(employee),HttpStatus.OK.value(),HttpStatus.OK.getReasonPhrase());
-		
-		} catch (Exception e) {
-			setResponseEmployer(new Employee(),HttpStatus.NO_CONTENT.value(),"Record doesn't exist for update");		
+		response = setResponseEmployer(new Employee(), HttpStatus.NO_CONTENT.value(),
+				"Record doesn't exist for update");
+		Employee e =  employeeRepository.findById(employee.getId()).get();
+		if (null != e) {
+			response = setResponseEmployer(employeeRepository.save(employee), HttpStatus.OK.value(),
+					HttpStatus.OK.getReasonPhrase());
 		}
 		return response;
-		
+
 	}
 
-
-
-	private void employeeFindById(Employee employee) {
-		tempEmp = employeeRepository.findById(employee.getId()).get();
-	}
-
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation" })
 	public ResponseData<String> deleteEmployee(String id) {
 		String msg = "Record not found for deletion!";
-		try {
-			Employee byId =  employeeRepository.findById(id).get();
-			if (null != byId) {
-				employeeRepository.deleteById(id);
-				msg = "Record deleted succssfully!";
-				setResponseEmployerString(msg, HttpStatus.ACCEPTED.value(), HttpStatus.ACCEPTED.getReasonPhrase());				
-			}
-			setResponseEmployerString(msg, HttpStatus.METHOD_FAILURE.value(), HttpStatus.METHOD_FAILURE.getReasonPhrase());	
-	
-		} catch (Exception e) {
-			setResponseEmployerString(msg, HttpStatus.METHOD_FAILURE.value(), HttpStatus.METHOD_FAILURE.getReasonPhrase());
+
+		responseString = setResponseEmployerString(msg, HttpStatus.METHOD_FAILURE.value(),
+				HttpStatus.METHOD_FAILURE.getReasonPhrase());
+		Employee byId = employeeRepository.findById(id).get();
+		if (null != byId) {
+			employeeRepository.deleteById(id);
+			msg = "Record deleted succssfully!";
+			responseString = setResponseEmployerString(msg, HttpStatus.ACCEPTED.value(),
+					HttpStatus.ACCEPTED.getReasonPhrase());
 		}
+
 		return responseString;
 	}
 
@@ -109,20 +99,26 @@ public class EmployeeService {
 	public Employee employeesByNameOrEmail(String name, String email) {
 		return employeeRepository.findByNameOrEmail(name, email);
 	}
-	private void setResponseEmployer(Employee employee,int respCode, String respMsg) {
+
+	public ResponseData<Employee> setResponseEmployer(Employee employee, int respCode, String respMsg) {
 		response.setResponseContent(employee);
 		response.setResponseCode(respCode);
 		response.setResponseMessage(respMsg);
+		return response;
 	}
-	private void setResponseEmployerList(List<Employee> employee,int respCode, String respMsg) {
+
+	public ResponseData<List<Employee>> setResponseEmployerList(List<Employee> employee, int respCode, String respMsg) {
 		responseList.setResponseContent(employee);
 		responseList.setResponseCode(respCode);
 		responseList.setResponseMessage(respMsg);
+		return responseList;
 	}
-	private void setResponseEmployerString(String employee,int respCode, String respMsg) {
+
+	public ResponseData<String> setResponseEmployerString(String employee, int respCode, String respMsg) {
 		responseString.setResponseContent(employee);
 		responseString.setResponseCode(respCode);
 		responseString.setResponseMessage(respMsg);
+		return responseString;
 	}
 
 }
