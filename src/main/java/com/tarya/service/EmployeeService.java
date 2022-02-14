@@ -2,8 +2,11 @@ package com.tarya.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +32,7 @@ public class EmployeeService {
 	public ResponseData<Employee> createEmployee(Employee employee) {
 		tempEmp = employeeRepository.findByEmailAndName(employee.getEmail(), employee.getName());
 		if (null == tempEmp) {
-			Employee empFound = employeeRepository.save(employee);
+			Employee empFound = employeeRepository.insert(employee);
 			response = setResponseEmployer(empFound, HttpStatus.CREATED.value(), HttpStatus.CREATED.getReasonPhrase());
 		} else {
 			response = setResponseEmployer(tempEmp, HttpStatus.CONFLICT.value(), "Record already exist");
@@ -37,17 +40,14 @@ public class EmployeeService {
 		return response;
 	}
 
-	public ResponseData<Employee> getEmployeeById(String id) {
-		response = setResponseEmployer(new Employee(), HttpStatus.NO_CONTENT.value(), "Record Not Found");
-		tempEmp = employeeRepository.findById(id).get();
-		if (null != tempEmp) {
-			response = setResponseEmployer(tempEmp, HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
-		}
-		return response;
+
+	public ResponseData<Employee> getEmployeeById(String id) throws NoSuchElementException {
+		Optional<Employee> tempEmp = Optional.ofNullable(employeeRepository.findById(id).get());
+		return response = setResponseEmployer(tempEmp.get(), HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
+
 	}
 
 	public ResponseData<List<Employee>> getAllEmployees() {
-
 		empList = employeeRepository.findAll();
 		if (empList.size() > 0) {
 			responseList = setResponseEmployerList(empList, HttpStatus.OK.value(), HttpStatus.OK.getReasonPhrase());
@@ -59,32 +59,17 @@ public class EmployeeService {
 		return responseList;
 	}
 
-	public ResponseData<Employee> updateEmployee(Employee employee) {
-		response = setResponseEmployer(new Employee(), HttpStatus.NO_CONTENT.value(),
-				"Record doesn't exist for update");
-		Employee e =  employeeRepository.findById(employee.getId()).get();
-		if (null != e) {
-			response = setResponseEmployer(employeeRepository.save(employee), HttpStatus.OK.value(),
-					HttpStatus.OK.getReasonPhrase());
-		}
-		return response;
-
+	public ResponseData<Employee> updateEmployee(Employee employee) throws NoSuchElementException {
+		return response = setResponseEmployer(employeeRepository.save(employee), HttpStatus.OK.value(),
+				HttpStatus.OK.getReasonPhrase());
 	}
 
-	@SuppressWarnings({ "deprecation" })
-	public ResponseData<String> deleteEmployee(String id) {
-		String msg = "Record not found for deletion!";
-
-		responseString = setResponseEmployerString(msg, HttpStatus.METHOD_FAILURE.value(),
-				HttpStatus.METHOD_FAILURE.getReasonPhrase());
-		Employee byId = employeeRepository.findById(id).get();
-		if (null != byId) {
-			employeeRepository.deleteById(id);
-			msg = "Record deleted succssfully!";
-			responseString = setResponseEmployerString(msg, HttpStatus.ACCEPTED.value(),
-					HttpStatus.ACCEPTED.getReasonPhrase());
-		}
-
+	@Query(value = "{'id' : $0}", delete = true)
+	public ResponseData<String> deleteEmployee(String id) throws NoSuchElementException {
+		employeeRepository.deleteById(id);
+		String msg = "Record deleted succssfully!";
+		responseString = setResponseEmployerString(msg, HttpStatus.ACCEPTED.value(),
+				HttpStatus.ACCEPTED.getReasonPhrase());
 		return responseString;
 	}
 

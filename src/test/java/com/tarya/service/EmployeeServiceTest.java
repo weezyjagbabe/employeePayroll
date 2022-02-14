@@ -1,7 +1,9 @@
 package com.tarya.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -47,6 +50,7 @@ public class EmployeeServiceTest {
 	final Employee tempEmp = new Employee("620564da21a3ed511318a1af", "Solomon", "borteys@yahoo.com",
 			"Software Engineer");
 	Employee emptyEmp = new Employee();
+	Optional<Employee> nullEmp = null;
 	List<Employee> empList = new ArrayList<>();
 	final Optional<Employee> optEmp = Optional.ofNullable(tempEmp);
 	ResponseData<String> employeeString = new ResponseData<String>();
@@ -56,7 +60,6 @@ public class EmployeeServiceTest {
 
 	@Test
 	public void createEmployeeTest() throws Exception {
-		when(employeeRepository.save(any(Employee.class))).thenReturn(tempEmp);
 		employee = employeeService.createEmployee(tempEmp);
 		assertEquals(HttpStatus.CREATED.value(), employee.getResponseCode());
 	}
@@ -84,6 +87,18 @@ public class EmployeeServiceTest {
 		lenient().when(mock.getEmployeeById(Id)).thenReturn(employee);
 		assertEquals(HttpStatus.NO_CONTENT.value(), employee.getResponseCode());
 	}
+	
+	@Test
+	public void getEmployeeByIdTest_FromRepo() throws Exception {
+		final Optional<Employee> optEmp = Optional.ofNullable(null);
+		EmployeeRepository mock = org.mockito.Mockito.mock(EmployeeRepository.class);
+		lenient().when(mock.findById(Id)).thenReturn(nullEmp);
+		assertEquals(Optional.empty(), optEmp);
+	}
+	
+
+	
+	
 
 	@Test
 	public void getAllEmployeesTest() throws Exception {
@@ -109,7 +124,7 @@ public class EmployeeServiceTest {
 		employee.setResponseCode(HttpStatus.OK.value());
 		employee.setResponseMessage("Record already exist");
 		employee.setResponseContent(tempEmp);
-		when(employeeRepository.findById(Id)).thenReturn(optEmp);
+		lenient().when(employeeRepository.findById(Id)).thenReturn(optEmp);
 		employee = employeeService.updateEmployee(tempEmp);
 		assertEquals(HttpStatus.OK.value(), employee.getResponseCode());
 	}
@@ -123,10 +138,24 @@ public class EmployeeServiceTest {
 		lenient().when(mock.updateEmployee(tempEmp)).thenReturn(employee);
 		assertEquals(HttpStatus.NO_CONTENT.value(), employee.getResponseCode());
 	}
+	
+	@Test
+	public void updateEmployeeTest_WhenNull() throws Exception {
+		try {
+		EmployeeRepository mock = org.mockito.Mockito.mock(EmployeeRepository.class);
+		lenient().when(mock.findById(Id)).thenReturn(nullEmp);
+		
+		//employee = employeeService.updateEmployee(tempEmp);
+		} catch (NoSuchElementException e) {
+			assertInstanceOf(NoSuchElementException.class, e);
+		}
+	}
+	
+	
 
 	@Test
 	public void deleteEmployeeTest() throws Exception {
-		when(employeeRepository.findById(Id)).thenReturn(optEmp).thenReturn(null);
+		lenient().when(employeeRepository.findById(Id)).thenReturn(optEmp).thenReturn(null);
 		employeeService.deleteEmployee(Id);
 		verify(employeeRepository, times(1)).deleteById(Id);
 

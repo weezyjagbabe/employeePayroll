@@ -1,14 +1,19 @@
 package com.tarya.controller;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
+import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +85,9 @@ public class EmployeeControllerTest {
 		RequestBuilder request = MockMvcRequestBuilders.get("/employee/all").accept(MediaType.APPLICATION_JSON);
 
 		mockMvc.perform(request).andExpect(status().isOk())
-				.andExpect(content().json("{\"responseCode\":204,\"responseMessage\":\"No Content\",\"responseContent\":[]}")).andReturn();
+				.andExpect(content()
+						.json("{\"responseCode\":204,\"responseMessage\":\"No Content\",\"responseContent\":[]}"))
+				.andReturn();
 	}
 
 	@Test
@@ -99,6 +106,22 @@ public class EmployeeControllerTest {
 				.andReturn();
 	}
 
+	@Rule
+	public final ExpectedException exception = ExpectedException.none();
+
+	@Test
+	public void getEmployeeById_EmployeeNotFoundException() throws NoSuchElementException {
+		EmployeeService mock = org.mockito.Mockito.mock(EmployeeService.class);
+		exception.expect(NoSuchElementException.class);
+		try {
+			when(mock.getEmployeeById(anyString())).thenThrow(NoSuchElementException.class);
+			employeeService.getEmployeeById(anyString());
+		} catch (NoSuchElementException e) {
+			assertInstanceOf(NoSuchElementException.class, e);
+		}
+
+	}
+
 	@Test
 	public void getEmployeeById_noitems() throws Exception {
 		final String Id = "1";
@@ -111,7 +134,8 @@ public class EmployeeControllerTest {
 		RequestBuilder request = MockMvcRequestBuilders.get("/employee/{id}", Id).accept(MediaType.APPLICATION_JSON);
 
 		mockMvc.perform(request).andExpect(status().isOk())
-				.andExpect(content().json("{responseCode:204,responseMessage:'No Content',responseContent:{}}")).andReturn();
+				.andExpect(content().json("{responseCode:204,responseMessage:'No Content',responseContent:{}}"))
+				.andReturn();
 	}
 
 	@Test
@@ -123,9 +147,9 @@ public class EmployeeControllerTest {
 		when(employeeService.createEmployee(new Employee("1", "William", "willi@yahoo.com", "Support")))
 				.thenReturn(response);
 		mockMvc.perform(MockMvcRequestBuilders.post("/employee/create")
-				.content(asJsonString(new Employee("1","William","willi@yahoo.com","Support")))
-				.contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-		.andReturn().getResponse().getContentAsString();
+				.content(asJsonString(new Employee("1", "William", "willi@yahoo.com", "Support")))
+				.contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andReturn().getResponse()
+				.getContentAsString();
 
 	}
 
@@ -135,14 +159,13 @@ public class EmployeeControllerTest {
 		response.setResponseCode(HttpStatus.CREATED.value());
 		response.setResponseMessage(HttpStatus.CREATED.getReasonPhrase());
 		response.setResponseContent(new Employee("1", "William", "willi@yahoo.com", "Support"));
-		when(employeeService.updateEmployee(new Employee("1","William","willi@yahoo.com","Support")))
+		when(employeeService.updateEmployee(new Employee("1", "William", "willi@yahoo.com", "Support")))
 				.thenReturn(response);
 		mockMvc.perform(MockMvcRequestBuilders.put("/employee/update")
-				.content(asJsonString(new Employee("1","William", "willi@yahoo.com", "Support")))
+				.content(asJsonString(new Employee("1", "William", "willi@yahoo.com", "Support")))
 				.contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON))
-				
-		.andReturn().getResponse().getContentAsString();
 
+				.andReturn().getResponse().getContentAsString();
 
 	}
 
@@ -156,9 +179,9 @@ public class EmployeeControllerTest {
 		mockMvc.perform(MockMvcRequestBuilders.delete("/employee/{id}", "1")).andExpect(status().isAccepted());
 	}
 
-	public static String asJsonString(final Object obj) throws RuntimeException, JsonProcessingException{
-			return new ObjectMapper().writeValueAsString(obj);
-		
+	public static String asJsonString(final Object obj) throws RuntimeException, JsonProcessingException {
+		return new ObjectMapper().writeValueAsString(obj);
+
 	}
 
 }
